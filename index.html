@@ -1,0 +1,1815 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3DMark显卡跑分天梯站</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            color: #222; /* 更深的文字颜色 */
+            line-height: 1.6;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* 新的柔和渐变背景 */
+        body {
+            background-color: #f0f2f5; /* 一个柔和的底色 */
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                /* 嫩粉色 (左上) */
+                radial-gradient(circle at 20% 15%, rgba(255, 169, 182, 0.6), transparent 35%),
+                /* 鹅黄色 (右上) */
+                radial-gradient(circle at 85% 25%, rgba(255, 248, 181, 0.6), transparent 45%),
+                /* 淡雅蓝 (左下, 大面积) */
+                radial-gradient(circle at 10% 90%, rgba(165, 223, 242, 0.7), transparent 50%),
+                /* 紫色 (右下, 点缀) */
+                radial-gradient(circle at 90% 85%, rgba(219, 139, 219, 0.5), transparent 30%);
+            animation: soft-gradient-animation 40s ease-in-out infinite;
+            z-index: -1;
+            filter: blur(120px); /* 增加模糊，使过渡更柔和 */
+        }
+
+        @keyframes soft-gradient-animation {
+            0% {
+                transform: scale(1) rotate(0deg);
+                opacity: 0.7;
+            }
+            50% {
+                transform: scale(1.3) rotate(10deg);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(1) rotate(0deg);
+                opacity: 0.7;
+            }
+        }
+
+        /* GPU卡片悬浮效果增强 */
+        .gpu-pill {
+            position: relative;
+            overflow: hidden;
+        }
+
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            justify-content: center;
+        }
+
+        header {
+            text-align: center;
+            padding: 30px 0;
+            background: rgba(255, 255, 255, 0.4); /* 降低不透明度以增强玻璃感 */
+            border-radius: 18px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1); /* 强化阴影 */
+            position: relative; /* 恢复原状 */
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.2); /* 边框更亮以模拟玻璃边缘 */
+            width: 100%;
+            backdrop-filter: blur(12px); /* 核心的毛玻璃效果 */
+        }
+
+        header::before {
+            /* 移除动画背景 */
+            content: none;
+        }
+
+        @keyframes shine {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            color: #333; /* 提高标题对比度 */
+            text-shadow: none; /* 移除在浅色背景下效果不佳的阴影 */
+            margin-bottom: 8px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header-info {
+            position: relative;
+            z-index: 1;
+            margin-top: 10px;
+        }
+
+        .update-info {
+            color: #555;
+            font-size: 1em;
+            margin-bottom: 8px;
+        }
+
+        .credits {
+            font-size: 0.9em;
+            color: #555; /* 提高对比度 */
+            margin-bottom: 5px;
+        }
+
+        .rgb-text {
+            background: linear-gradient(45deg, #ff0000, #ff7700, #ffdd00, #00ff00, #0077ff, #7700ff, #ff0077, #ff0000);
+            background-size: 400% 100%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: rgbFlow 3s linear infinite;
+            text-shadow: 0 0 10px rgba(255,255,255,0.5);
+            font-weight: bold;
+        }
+
+        @keyframes rgbFlow {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 400% 50%; }
+        }
+
+        .credits a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .credits a:hover {
+            text-decoration: underline;
+        }
+
+        .thanks {
+            font-size: 0.85em;
+            color: #666; /* 提高对比度 */
+            margin-bottom: 3px;
+        }
+
+        .small-note {
+            font-size: 0.7em;
+            color: #888;
+        }
+
+        /* 备注提示 */
+        .disclaimer {
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            border-radius: 12px;
+            padding: 12px 20px;
+            margin: 30px 0;
+            text-align: center;
+            color: #555;
+            font-size: 0.85em;
+            backdrop-filter: blur(10px);
+            width: 100%;
+        }
+
+        /* 对比区域 - 常驻显示 */
+        .comparison-section {
+            background: rgba(255, 255, 255, 0.85); /* 提高不透明度 */
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            min-height: 160px;
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+            width: 100%;
+        }
+
+        @media (min-width: 769px) {
+            .comparison-section {
+                position: sticky;
+                top: 20px;
+                z-index: 99;
+            }
+        }
+
+        .comparison-section.disabled {
+            background: rgba(230, 230, 230, 0.7); /* 更不透明的灰色背景 */
+            border-color: rgba(150, 150, 150, 0.3);
+            pointer-events: none;
+        }
+
+        .comparison-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .comparison-title {
+            font-size: 1.4em;
+            font-weight: bold;
+            background: linear-gradient(45deg, #4a9eff, #00d4ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .comparison-hint {
+            font-size: 0.9em;
+            color: #666; /* 加深颜色 */
+            font-style: italic;
+        }
+
+        .clear-comparison {
+            padding: 8px 20px;
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s;
+            box-shadow: 0 4px 10px rgba(220, 53, 69, 0.3);
+        }
+
+        .clear-comparison:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(220, 53, 69, 0.4);
+        }
+
+        /* 左右对比布局 */
+        .comparison-wrapper {
+            display: flex;
+            gap: 25px;
+            align-items: start;
+        }
+
+        .comparison-cards {
+            flex: 1 1 60%;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            min-width: 0;
+        }
+
+        .comparison-card {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.7); /* 调亮背景 */
+            border-radius: 15px;
+            padding: 20px;
+            opacity: 0;
+            transform: scale(0.8);
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            min-width: 0;
+            backdrop-filter: blur(5px);
+        }
+
+        .comparison-card.show {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .comparison-card.left {
+            border: 2px solid #4a9eff;
+            box-shadow: 0 0 20px rgba(74, 158, 255, 0.3);
+        }
+
+        .comparison-card.right {
+            border: 2px solid #ff6b6b;
+            box-shadow: 0 0 20px rgba(255, 107, 107, 0.3);
+        }
+
+        .comparison-gpu-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-align: center;
+            line-height: 1.3;
+            min-height: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .comparison-scores {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .comparison-score-item {
+            background: rgba(220, 230, 255, 0.4); /* 淡蓝色背景 */
+            padding: 8px 12px;
+            border-radius: 8px; /* 稍小的圆角 */
+            text-align: center;
+            flex: 1 1 45%;
+            min-width: 100px;
+            border: 1px solid rgba(74, 158, 255, 0.3); /* 蓝色边框 */
+            box-shadow: 0 2px 5px rgba(74, 158, 255, 0.1); /* 细微阴影 */
+            transition: all 0.3s;
+        }
+
+        .comparison-score-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(74, 158, 255, 0.2);
+        }
+
+        .comparison-score-label {
+            font-size: 0.75em;
+            color: #999;
+            margin-bottom: 4px;
+        }
+
+        .comparison-score-value {
+            font-size: 1em;
+            font-weight: bold;
+            color: #4a9eff;
+        }
+
+        .vs-divider {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #ffd93d;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.5);
+            flex: 0 0 auto;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .comparison-result {
+            flex: 0 0 300px;
+            background: linear-gradient(135deg, rgba(74, 158, 255, 0.15) 0%, rgba(74, 158, 255, 0.05) 100%);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(74, 158, 255, 0.3);
+        }
+
+        .comparison-result-item {
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9em;
+            padding: 8px 0; /* 增加垂直内边距 */
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .comparison-result-item:last-child {
+            border-bottom: none;
+        }
+
+        .comparison-result-label {
+            color: #aaa;
+            font-size: 0.85em;
+        }
+
+        .comparison-result-details {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex: 1; /* 占据剩余空间 */
+            margin-left: 15px; /* 与左侧标签拉开距离 */
+        }
+
+        .comparison-result-winner {
+            color: #00ff88;
+            font-weight: bold;
+            text-align: left;
+            flex: 1; /* 占据尽可能多的空间 */
+        }
+
+        .comparison-result-percentage {
+            color: #ffd93d;
+            font-weight: bold;
+            text-align: right;
+            min-width: 60px; /* 保持一个最小宽度，防止百分比过窄 */
+        }
+
+        /* 基准模式提示 */
+        .benchmark-mode-notice {
+            display: none;
+            text-align: center;
+            padding: 40px;
+            color: #777; /* 加深颜色 */
+            font-size: 1.2em;
+        }
+
+        .benchmark-info {
+            margin-top: 15px;
+            padding: 15px;
+            background: linear-gradient(135deg, rgba(255, 200, 0, 0.15) 0%, rgba(255, 200, 0, 0.05) 100%);
+            border-radius: 10px;
+            color: #e6a700; /* 更深的黄色 */
+            font-weight: 600;
+            box-shadow: 0 0 20px rgba(255, 200, 0, 0.2);
+        }
+
+        /* 跑分切换 */
+        .score-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .mode-toggle {
+            padding: 10px 25px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.7);
+            color: #333; /* 提高对比度 */
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 15px;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .mode-toggle:hover {
+            background: rgba(255, 255, 255, 0.9);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+        }
+
+        .score-switcher {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+
+        .score-btn {
+            padding: 10px 22px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.7);
+            color: #333;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .score-btn:hover {
+            background: rgba(255, 255, 255, 0.9);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .score-btn.active {
+            background: #fff; /* 更明亮的激活样式 */
+            color: #2a5298;
+            box-shadow: 0 6px 20px rgba(42, 82, 152, 0.4);
+            transform: translateY(-1px);
+        }
+
+        /* 搜索和筛选 */
+        .controls {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 25px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 16px 25px;
+            font-size: 16px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 30px;
+            background: rgba(255, 255, 255, 0.7);
+            color: #333;
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .search-box input::placeholder {
+            color: rgba(255,255,255,0.5);
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #4a7cc8;
+            background: rgba(255,255,255,0.1);
+            box-shadow: 0 0 20px rgba(74, 124, 200, 0.3);
+        }
+
+        .filters {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 10px 20px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.7);
+            color: #333;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 13px;
+            font-weight: 500;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .filter-btn:hover {
+            background: rgba(255, 255, 255, 0.9);
+            transform: translateY(-2px);
+            border-color: #4a7cc8;
+        }
+
+        .filter-btn.active {
+            background: #fff; /* 更明亮的激活样式 */
+            color: #2a5298;
+            box-shadow: 0 4px 15px rgba(42, 82, 152, 0.4);
+            border-color: #2a5298;
+        }
+
+        /* GPU列表 */
+        .gpu-list {
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 16px;
+            padding: 25px;
+            position: relative;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            width: 100%;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+        }
+
+        /* GPU项目容器 */
+        .gpu-item-container {
+            position: relative;
+            margin-bottom: 40px;
+            transition: all 0.3s;
+        }
+
+        .gpu-item-container.in-comparison {
+            opacity: 0.3;
+            filter: grayscale(50%);
+        }
+
+        .gpu-item-container.benchmark-base {
+            opacity: 1 !important;
+            filter: none !important;
+        }
+
+        /* GPU药丸卡片 */
+        .gpu-pill {
+            display: flex; /* 改为 flex 以更好地控制内部对齐 */
+            align-items: center;
+            gap: 15px; /* 增加间距 */
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 14px; /* 减小圆角，更精致 */
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            z-index: 2;
+            width: 100%; /* 撑满容器 */
+            overflow: hidden;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .gpu-pill:hover {
+            background: rgba(255, 255, 255, 0.9);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+        }
+
+        .gpu-pill.nvidia {
+            border: 2px solid #76b900;
+            box-shadow: 0 4px 15px rgba(118, 185, 0, 0.2);
+        }
+
+        .gpu-pill.nvidia:hover {
+            box-shadow: 0 6px 20px rgba(118, 185, 0, 0.3);
+        }
+
+        .gpu-pill.amd {
+            border: 2px solid #ed1c24;
+            box-shadow: 0 4px 15px rgba(237, 28, 36, 0.2);
+        }
+
+        .gpu-pill.amd:hover {
+            box-shadow: 0 6px 20px rgba(237, 28, 36, 0.3);
+        }
+
+        .gpu-pill.intel {
+            border: 2px solid #0071c5;
+            box-shadow: 0 4px 15px rgba(0, 113, 197, 0.2);
+        }
+
+        .gpu-pill.intel:hover {
+            box-shadow: 0 6px 20px rgba(0, 113, 197, 0.3);
+        }
+
+        .gpu-pill.benchmark-base {
+            background: linear-gradient(135deg, rgba(255, 200, 0, 0.3) 0%, rgba(255, 200, 0, 0.15) 100%);
+            border-color: #ffd93d;
+            box-shadow: 0 0 30px rgba(255, 200, 0, 0.4);
+        }
+
+        .gpu-rank {
+            font-size: 0.9em;
+            color: #888;
+            font-weight: 600;
+            min-width: 35px;
+            flex-shrink: 0;
+        }
+
+        .gpu-name {
+            font-weight: 600;
+            font-size: 0.95em;
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 2px;
+        }
+
+        .mobile-badge {
+            background: linear-gradient(135deg, rgba(100, 100, 255, 0.4) 0%, rgba(100, 100, 255, 0.2) 100%);
+            color: #9cf;
+            padding: 1px 6px;
+            border-radius: 8px;
+            font-size: 0.6em;
+            font-weight: 600;
+            border: 1px solid rgba(100, 100, 255, 0.5);
+            margin-top: 1px;
+            align-self: flex-start;
+        }
+
+        .gpu-score-text {
+            font-weight: bold;
+            color: #4a9eff;
+            font-size: 0.95em;
+            min-width: 55px;
+            text-align: right;
+            flex-shrink: 0;
+        }
+
+        /* 基准模式百分比 */
+        .benchmark-percentage {
+            font-weight: bold;
+            font-size: 0.8em;
+            margin-left: 6px;
+            min-width: 50px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .benchmark-percentage.positive {
+            color: #00ff88;
+        }
+
+        .benchmark-percentage.negative {
+            color: #ff6b6b;
+        }
+
+        .benchmark-percentage.base {
+            color: #ffd93d;
+        }
+
+        /* 基准显卡说明样式 */
+        .benchmark-explanation {
+            margin-top: 15px;
+            width: 100%;
+        }
+
+        .benchmark-note-card {
+            background: linear-gradient(135deg, rgba(255, 200, 0, 0.15) 0%, rgba(255, 200, 0, 0.05) 100%);
+            border: 2px solid rgba(255, 200, 0, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 4px 15px rgba(255, 200, 0, 0.2);
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from {
+                box-shadow: 0 4px 15px rgba(255, 200, 0, 0.2);
+            }
+            to {
+                box-shadow: 0 6px 20px rgba(255, 200, 0, 0.4);
+            }
+        }
+
+        .benchmark-icon {
+            font-size: 1.5em;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .benchmark-text {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .benchmark-title {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #ffd93d;
+            margin-bottom: 6px;
+        }
+
+        .benchmark-desc {
+            font-size: 0.9em;
+            color: #555; /* 加深颜色 */
+            line-height: 1.4;
+        }
+
+        .positive-example {
+            color: #00ff88;
+            font-weight: 600;
+        }
+
+        .negative-example {
+            color: #ff6b6b;
+            font-weight: 600;
+        }
+
+        /* 分数柱 - 位于卡片下方 */
+        .gpu-bar-container {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 100%;
+            margin-top: 10px;
+            height: 22px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 11px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .gpu-bar {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            background: linear-gradient(90deg, #00d4ff, #0099cc);
+            border-radius: 11px;
+            transition: width 0.5s ease-out;
+            opacity: 0.9;
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .gpu-pill {
+                font-size: 0.85em;
+                padding: 10px 16px;
+                gap: 8px;
+                width: 300px;
+            }
+            
+            .comparison-wrapper {
+                flex-direction: column;
+            }
+            
+            .comparison-cards {
+                flex: 1;
+                width: 100%;
+            }
+            
+            .comparison-result {
+                flex: 1;
+                width: 100%;
+            }
+
+            .gpu-item-container {
+                margin-bottom: 35px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            .benchmark-percentage {
+                min-width: 40px;
+                font-size: 0.75em;
+            }
+        }
+
+        /* 飞行动画 */
+        @keyframes flyToTop {
+            0% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            50% {
+                opacity: 0.5;
+                transform: translateY(-100px) scale(0.8);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-200px) scale(0.5);
+            }
+        }
+
+        .gpu-pill.flying {
+            animation: flyToTop 0.5s ease-out;
+        }
+
+        .empty-comparison {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 80px;
+            color: #666;
+            font-style: italic;
+        }
+
+        /* 更新日志样式 */
+        .changelog-section {
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+            width: 100%;
+            position: relative; /* 添加相对定位 */
+        }
+
+        .changelog-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .changelog-title {
+            font-size: 1.4em;
+            font-weight: bold;
+            background: linear-gradient(45deg, #4a9eff, #00d4ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            /* 移除发光动画 */
+        }
+
+        .changelog-toggle {
+            padding: 8px 20px;
+            background: linear-gradient(135deg, #4a9eff, #00d4ff);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s;
+            box-shadow: 0 4px 10px rgba(74, 158, 255, 0.3);
+        }
+
+        .changelog-toggle:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(74, 158, 255, 0.4);
+        }
+
+        .changelog-content {
+            display: none;
+        }
+
+        .changelog-content.show {
+            display: block;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .changelog-item {
+            background: rgba(255, 255, 255, 0.5); /* 调亮背景 */
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid #4a9eff;
+            /* 移除悬浮效果 */
+        }
+
+        .changelog-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .changelog-date {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #4a9eff;
+            margin-bottom: 8px;
+        }
+
+        .changelog-version {
+            font-size: 0.9em;
+            color: #999;
+            margin-bottom: 10px;
+        }
+
+        .changelog-changes {
+            list-style: none;
+            padding: 0;
+        }
+
+        .changelog-changes li {
+            padding: 4px 0;
+            color: #444; /* 加深颜色 */
+            position: relative;
+            padding-left: 20px;
+        }
+
+        .changelog-changes li::before {
+            content: '•';
+            color: #4a9eff;
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+        }
+
+        /* 返回顶部按钮 */
+        .back-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #4a9eff, #00d4ff);
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            transition: all 0.3s;
+            z-index: 1000;
+            box-shadow: 0 4px 15px rgba(74, 158, 255, 0.3);
+        }
+
+        .back-to-top:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(74, 158, 255, 0.5);
+        }
+
+        .back-to-top.show {
+            display: flex;
+            animation: bounceIn 0.3s ease-out;
+        }
+
+        @keyframes bounceIn {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.1);
+                opacity: 0.8;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* 响应式优化 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px 15px; /* 减小移动端内边距 */
+            }
+
+            h1 {
+                font-size: 1.8em; /* 调整移动端标题大小 */
+            }
+
+            .controls {
+                flex-direction: column; /* 控件纵向排列 */
+                align-items: stretch;
+            }
+
+            .changelog-header {
+                flex-direction: column;
+                gap: 10px;
+                align-items: flex-start;
+            }
+            
+            .back-to-top {
+                bottom: 20px;
+                right: 20px;
+                width: 45px;
+                height: 45px;
+                font-size: 18px;
+            }
+
+            /* 在移动端移除白天模式的背景光效 */
+            body:not(.dark-mode)::before {
+                display: none;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .container {
+                max-width: 1600px; /* 显著加宽 PC 端布局 */
+                padding: 40px;
+            }
+        }
+
+        /* 暗夜模式样式 */
+        body.dark-mode {
+            background-color: #1a1a1a;
+            color: #ccc;
+        }
+
+        body.dark-mode::before {
+            background: radial-gradient(circle at 90% 10%, rgba(120, 160, 255, 0.15), transparent 40%);
+            filter: blur(100px);
+            opacity: 0.7;
+            animation: soft-gradient-animation 40s ease-in-out infinite;
+        }
+
+        /* 移除旧的 ::after 样式 */
+
+        #stars-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: -2;
+            pointer-events: none;
+        }
+
+        .star-bg {
+            position: absolute;
+            color: white;
+            width: 12px; /* 默认大小 */
+            height: 12px;
+            opacity: 0;
+            animation: twinkle ease-in-out infinite;
+            transform-origin: center; /* 确保以中心点旋转 */
+        }
+
+        .star-bg svg {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.8));
+        }
+
+        @keyframes twinkle {
+            0% {
+                opacity: 0;
+                transform: scale(0.5) rotate(0deg);
+                filter: brightness(1);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1) rotate(180deg);
+                filter: brightness(1.5);
+            }
+            100% {
+                opacity: 0;
+                transform: scale(0.5) rotate(360deg);
+                filter: brightness(1);
+            }
+        }
+
+        .shooting-star {
+            position: absolute;
+            width: 2px;
+            height: 80px;
+            background: linear-gradient(to bottom, rgba(255, 255, 255, 0.8), transparent);
+            border-radius: 50%;
+            opacity: 0;
+            animation: shooting-star-animation linear infinite;
+        }
+
+        @keyframes shooting-star-animation {
+            0% {
+                opacity: 0;
+                transform: translateY(-200px) translateX(0) rotate(-45deg);
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(calc(100vh + 200px)) translateX(calc(100vw + 200px)) rotate(-45deg);
+            }
+        }
+
+        body.dark-mode header,
+        body.dark-mode .disclaimer,
+        body.dark-mode .comparison-section,
+        body.dark-mode .gpu-list,
+        body.dark-mode .changelog-section {
+            background: rgba(30, 30, 30, 0.7);
+            border-color: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+
+        body.dark-mode h1,
+        body.dark-mode .comparison-title,
+        body.dark-mode .changelog-title {
+            color: #eee;
+        }
+
+        body.dark-mode .update-info,
+        body.dark-mode .credits,
+        body.dark-mode .thanks,
+        body.dark-mode .small-note,
+        body.dark-mode .disclaimer,
+        body.dark-mode .comparison-hint,
+        body.dark-mode .empty-comparison,
+        body.dark-mode .benchmark-mode-notice {
+            color: #aaa;
+        }
+
+        body.dark-mode .mode-toggle,
+        body.dark-mode .score-btn,
+        body.dark-mode .filter-btn,
+        body.dark-mode .theme-toggle {
+            background: rgba(50, 50, 50, 0.7);
+            color: #ccc;
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        body.dark-mode .mode-toggle:hover,
+        body.dark-mode .score-btn:hover,
+        body.dark-mode .filter-btn:hover,
+        body.dark-mode .theme-toggle:hover {
+            background: rgba(70, 70, 70, 0.9);
+        }
+
+        body.dark-mode .score-btn.active,
+        body.dark-mode .filter-btn.active {
+            background: #333;
+            color: #4a9eff;
+            box-shadow: 0 4px 15px rgba(74, 158, 255, 0.2);
+        }
+
+        body.dark-mode .search-box input {
+            background: rgba(50, 50, 50, 0.7);
+            color: #ccc;
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        body.dark-mode .search-box input:focus {
+            background: rgba(70, 70, 70, 0.9);
+            border-color: #4a9eff;
+            box-shadow: 0 0 20px rgba(74, 158, 255, 0.2);
+        }
+
+        body.dark-mode .gpu-pill {
+            background: rgba(40, 40, 40, 0.7);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        body.dark-mode .gpu-pill:hover {
+            background: rgba(60, 60, 60, 0.9);
+        }
+
+        body.dark-mode .gpu-rank {
+            color: #888;
+        }
+
+        body.dark-mode .gpu-name {
+            color: #ddd;
+        }
+
+        body.dark-mode .comparison-card {
+            background: rgba(40, 40, 40, 0.7);
+        }
+
+        body.dark-mode .comparison-score-item {
+            background: rgba(50, 50, 50, 0.4);
+            border-color: rgba(74, 158, 255, 0.3);
+        }
+
+        body.dark-mode .comparison-result {
+            background: linear-gradient(135deg, rgba(74, 158, 255, 0.1) 0%, rgba(74, 158, 255, 0.05) 100%);
+            border-color: rgba(74, 158, 255, 0.3);
+        }
+
+        body.dark-mode .changelog-item {
+            background: rgba(40, 40, 40, 0.5);
+        }
+
+        body.dark-mode .changelog-changes li {
+            color: #bbb;
+        }
+    </style>
+    <style>
+        #theme-toggle-container-desktop {
+            position: absolute;
+            top: 30px;
+            right: 80px;
+            z-index: 10;
+        }
+
+        #theme-toggle-container-mobile {
+            display: none;
+            position: absolute;
+            top: 15px; /* 调整位置 */
+            left: 15px; /* 调整位置 */
+            z-index: 10;
+        }
+
+        @media (max-width: 768px) {
+            #theme-toggle-container-desktop {
+                display: none;
+            }
+            #theme-toggle-container-mobile {
+                display: block;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div id="theme-toggle-container-desktop">
+                <theme-button value="light" id="themeBtnDesktop" size="1.8"></theme-button>
+            </div>
+            <h1>3DMark 显卡跑分天梯站</h1>
+            <div class="header-info">
+                <p class="update-info">更新日期：2025.8.17</p>
+                <p class="credits">页面制作：天童爱丽丝</p>
+                <p class="credits">BUG修缮&UI排版：<a href="https://b23.tv/st0BlKg" target="_blank" class="rgb-text">EntID</a></p>
+                <p class="thanks">特别感谢&数据来源：<a href="https://b23.tv/LiPpkh6" target="_blank">芝士华莱士</a></p>
+                <p class="small-note">关注显卡日报谢谢喵~</p>
+            </div>
+        </header>
+
+        <!-- 更新日志区域 -->
+        <div class="changelog-section">
+            <div id="theme-toggle-container-mobile">
+                <theme-button value="light" id="themeBtnMobile" size="1.6"></theme-button>
+            </div>
+            <div class="changelog-header">
+                <h2 class="changelog-title">更新日志</h2>
+                <button class="changelog-toggle" onclick="toggleChangelog()">展开日志</button>
+            </div>
+            <div class="changelog-content" id="changelogContent">
+                <!-- 更新日志内容将通过JavaScript动态加载 -->
+            </div>
+        </div>
+
+        <!-- 备注提示 -->
+        <div class="disclaimer">
+            跑分仅供参考，不代表实际游戏和特定软件的表现，实际体验可能受驱动和环境以及软件本身优化影响
+        </div>
+
+        <!-- 对比区域 - 常驻显示 -->
+        <div class="comparison-section" id="comparisonSection">
+            <div class="comparison-header">
+                <div>
+                    <h2 class="comparison-title">显卡性能对比</h2>
+                    <p class="comparison-hint">点击显卡型号可以在此对比</p>
+                </div>
+                <button class="clear-comparison" style="display: none;">清除对比</button>
+            </div>
+            <div class="comparison-wrapper">
+                <div class="comparison-cards">
+                    <div class="comparison-card left" id="leftCard" style="display: none;"></div>
+                    <div class="vs-divider" id="vsDivider" style="display: none;">VS</div>
+                    <div class="comparison-card right" id="rightCard" style="display: none;"></div>
+                    <div class="empty-comparison" id="emptyComparison">
+                        请选择两个显卡进行对比
+                    </div>
+                </div>
+                <div class="comparison-result" id="comparisonResult" style="display: none;"></div>
+            </div>
+            <div class="benchmark-mode-notice" id="benchmarkNotice">
+                基准模式下对比功能不可用
+                <div class="benchmark-info" id="benchmarkInfo"></div>
+            </div>
+        </div>
+
+        <!-- 跑分切换 -->
+        <div class="score-controls">
+            <button class="mode-toggle" id="modeToggle">基准模式</button>
+            <div class="score-switcher">
+                <button class="score-btn active" data-score="timeSpy">Time Spy (2K光栅)</button>
+                <button class="score-btn" data-score="timeSpyEx">Time Spy Extreme (4K光栅)</button>
+                <button class="score-btn" data-score="portRoyal">Port Royal (光追)</button>
+                <button class="score-btn" data-score="steelNomad">Steel Nomad (4K重度光栅)</button>
+            </div>
+        </div>
+
+        <!-- 搜索和筛选 -->
+        <div class="controls">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="搜索显卡型号..." />
+            </div>
+            <div class="filters">
+                <button class="filter-btn active" data-filter="all">全部</button>
+                <button class="filter-btn" data-filter="nvidia">NVIDIA</button>
+                <button class="filter-btn" data-filter="amd">AMD</button>
+                <button class="filter-btn" data-filter="intel">Intel</button>
+                <button class="filter-btn" data-filter="desktop">桌面显卡</button>
+                <button class="filter-btn" data-filter="mobile">移动显卡</button>
+            </div>
+        </div>
+
+        <!-- GPU列表 -->
+        <div class="gpu-list" id="gpuList"></div>
+    </div>
+
+    <!-- 返回顶部按钮 -->
+    <button class="back-to-top" id="backToTop" onclick="scrollToTop()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+    </button>
+
+    <!-- 模块引入和初始化 -->
+    <script type="module">
+        import { GPUBenchmarkApp, clearComparison } from './ui.js';
+        import { CHANGELOG } from './config.js';
+        
+        // 初始化应用
+        const app = new GPUBenchmarkApp();
+        app.init();
+        
+        // 导出到全局作用域用于调试和向后兼容
+        window.gpuApp = app;
+        window.clearComparison = clearComparison;
+        
+        // 开发模式下的调试信息
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            console.log('GPU Benchmark App initialized', app.getState());
+        }
+
+        // 更新日志功能
+        function toggleChangelog() {
+            const content = document.getElementById('changelogContent');
+            const button = document.querySelector('.changelog-toggle');
+            
+            if (content.classList.contains('show')) {
+                content.classList.remove('show');
+                button.textContent = '展开日志';
+            } else {
+                content.classList.add('show');
+                button.textContent = '收起日志';
+                
+                // 如果第一次展开，加载更新日志内容
+                if (!content.hasAttribute('data-loaded')) {
+                    loadChangelog();
+                    content.setAttribute('data-loaded', 'true');
+                }
+            }
+        }
+        window.toggleChangelog = toggleChangelog;
+
+        // 加载更新日志内容
+        function loadChangelog() {
+            const content = document.getElementById('changelogContent');
+            content.innerHTML = CHANGELOG.map(item => `
+                <div class="changelog-item">
+                    <div class="changelog-date">${item.date}</div>
+                    <div class="changelog-version">版本 ${item.version}</div>
+                    <ul class="changelog-changes">
+                        ${item.changes.map(change => `<li>${change}</li>`).join('')}
+                    </ul>
+                </div>
+            `).join('');
+        }
+
+        // 返回顶部功能
+        function scrollToTop() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
+        window.scrollToTop = scrollToTop;
+
+        // 监听滚动事件，控制返回顶部按钮显示
+        window.addEventListener('scroll', function() {
+            const backToTop = document.getElementById('backToTop');
+            if (window.pageYOffset > 300) {
+                backToTop.classList.add('show');
+            } else {
+                backToTop.classList.remove('show');
+            }
+        });
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化返回顶部按钮状态
+            const backToTop = document.getElementById('backToTop');
+            if (window.pageYOffset > 300) {
+                backToTop.classList.add('show');
+            }
+        });
+    </script>
+    <script>
+    (() => {
+      const func = (root, initTheme, changeTheme) => {
+        const $ = (s) => {
+          let dom = root.querySelectorAll(s);
+          return dom.length == 1 ? dom[0] : dom;
+        };
+        let mainButton = $(".main-button");
+        let daytimeBackground = $(".daytime-background");
+        let cloud = $(".cloud");
+        let cloudList = $(".cloud-son");
+        let cloudLight = $(".cloud-light");
+        let components = $(".components");
+        let moon = $(".moon");
+        let stars = $(".stars");
+        let star = $(".star");
+        let isMoved = false;
+        let isClicked = false;
+        window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+          toggleThemeBasedOnSystem();
+        });
+        const toggleThemeBasedOnSystem = () => {
+          if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+            if (!isMoved) {
+              components.onclick();
+            }
+          } else {
+            if (isMoved) {
+              components.onclick();
+            }
+          }
+        };
+        components.onclick = () => {
+          if (isMoved) {
+            mainButton.style.transform = "translateX(0)";
+            mainButton.style.backgroundColor = "rgba(255, 195, 35,1)";
+    
+            mainButton.style.boxShadow =
+              "3em 3em 5em rgba(0, 0, 0, 0.5), inset  -3em -5em 3em -3em rgba(0, 0, 0, 0.5), inset  4em 5em 2em -2em rgba(255, 230, 80,1)";
+    
+            daytimeBackground[0].style.transform = "translateX(0)";
+            daytimeBackground[1].style.transform = "translateX(0)";
+            daytimeBackground[2].style.transform = "translateX(0)";
+            cloud.style.transform = "translateY(10em)";
+            cloudLight.style.transform = "translateY(10em)";
+            components.style.backgroundColor = "rgba(70, 133, 192,1)";
+    
+            moon[0].style.opacity = "0";
+            moon[1].style.opacity = "0";
+            moon[2].style.opacity = "0";
+    
+            stars.style.transform = "translateY(-125em)";
+            stars.style.opacity = "0";
+    
+            changeTheme("light");
+          } else {
+            mainButton.style.transform = "translateX(110em)";
+            mainButton.style.backgroundColor = "rgba(195, 200,210,1)";
+    
+            mainButton.style.boxShadow =
+              "3em 3em 5em rgba(0, 0, 0, 0.5), inset  -3em -5em 3em -3em rgba(0, 0, 0, 0.5), inset  4em 5em 2em -2em rgba(255, 255, 210,1)";
+    
+            daytimeBackground[0].style.transform = "translateX(110em)";
+            daytimeBackground[1].style.transform = "translateX(80em)";
+            daytimeBackground[2].style.transform = "translateX(50em)";
+            cloud.style.transform = "translateY(80em)";
+            cloudLight.style.transform = "translateY(80em)";
+            components.style.backgroundColor = "rgba(25,30,50,1)";
+    
+            moon[0].style.opacity = "1";
+            moon[1].style.opacity = "1";
+            moon[2].style.opacity = "1";
+    
+            stars.style.transform = "translateY(-62.5em)";
+            stars.style.opacity = "1";
+    
+            changeTheme("dark");
+          }
+    
+          isClicked = true;
+    
+          setTimeout(function () {
+            isClicked = false;
+          }, 500);
+          isMoved = !isMoved;
+        };
+    
+        mainButton.addEventListener("mousemove", function () {
+          if (isClicked) return;
+    
+          if (isMoved) {
+            mainButton.style.transform = "translateX(100em)";
+            daytimeBackground[0].style.transform = "translateX(100em)";
+            daytimeBackground[1].style.transform = "translateX(73em)";
+            daytimeBackground[2].style.transform = "translateX(46em)";
+    
+            star[0].style.top = "10em";
+            star[0].style.left = "36em";
+            star[1].style.top = "40em";
+            star[1].style.left = "87em";
+            star[2].style.top = "26em";
+            star[2].style.left = "16em";
+            star[3].style.top = "38em";
+            star[3].style.left = "63em";
+            star[4].style.top = "20.5em";
+            star[4].style.left = "72em";
+            star[5].style.top = "51.5em";
+            star[5].style.left = "35em";
+          } else {
+            mainButton.style.transform = "translateX(10em)";
+            daytimeBackground[0].style.transform = "translateX(10em)";
+            daytimeBackground[1].style.transform = "translateX(7em)";
+            daytimeBackground[2].style.transform = "translateX(4em)";
+    
+            cloudList[0].style.right = "-24em";
+            cloudList[0].style.bottom = "10em";
+            cloudList[1].style.right = "-12em";
+            cloudList[1].style.bottom = "-27em";
+            cloudList[2].style.right = "17em";
+            cloudList[2].style.bottom = "-43em";
+            cloudList[3].style.right = "46em";
+            cloudList[3].style.bottom = "-39em";
+            cloudList[4].style.right = "70em";
+            cloudList[4].style.bottom = "-65em";
+            cloudList[5].style.right = "109em";
+            cloudList[5].style.bottom = "-54em";
+            cloudList[6].style.right = "-23em";
+            cloudList[6].style.bottom = "10em";
+            cloudList[7].style.right = "-11em";
+            cloudList[7].style.bottom = "-26em";
+            cloudList[8].style.right = "18em";
+            cloudList[8].style.bottom = "-42em";
+            cloudList[9].style.right = "47em";
+            cloudList[9].style.bottom = "-38em";
+            cloudList[10].style.right = "74em";
+            cloudList[10].style.bottom = "-64em";
+            cloudList[11].style.right = "110em";
+            cloudList[11].style.bottom = "-55em";
+          }
+        });
+    
+        mainButton.addEventListener("mouseout", function () {
+          if (isClicked) {
+            return;
+          }
+          if (isMoved) {
+            mainButton.style.transform = "translateX(110em)";
+            daytimeBackground[0].style.transform = "translateX(110em)";
+            daytimeBackground[1].style.transform = "translateX(80em)";
+            daytimeBackground[2].style.transform = "translateX(50em)";
+    
+            star[0].style.top = "11em";
+            star[0].style.left = "39em";
+            star[1].style.top = "39em";
+            star[1].style.left = "91em";
+            star[2].style.top = "26em";
+            star[2].style.left = "19em";
+            star[3].style.top = "37em";
+            star[3].style.left = "66em";
+            star[4].style.top = "21em";
+            star[4].style.left = "75em";
+            star[5].style.top = "51em";
+            star[5].style.left = "38em";
+          } else {
+            mainButton.style.transform = "translateX(0em)";
+            daytimeBackground[0].style.transform = "translateX(0em)";
+            daytimeBackground[1].style.transform = "translateX(0em)";
+            daytimeBackground[2].style.transform = "translateX(0em)";
+    
+            cloudList[0].style.right = "-20em";
+            cloudList[0].style.bottom = "10em";
+            cloudList[1].style.right = "-10em";
+            cloudList[1].style.bottom = "-25em";
+            cloudList[2].style.right = "20em";
+            cloudList[2].style.bottom = "-40em";
+            cloudList[3].style.right = "50em";
+            cloudList[3].style.bottom = "-35em";
+            cloudList[4].style.right = "75em";
+            cloudList[4].style.bottom = "-60em";
+            cloudList[5].style.right = "110em";
+            cloudList[5].style.bottom = "-50em";
+            cloudList[6].style.right = "-20em";
+            cloudList[6].style.bottom = "10em";
+            cloudList[7].style.right = "-10em";
+            cloudList[7].style.bottom = "-25em";
+            cloudList[8].style.right = "20em";
+            cloudList[8].style.bottom = "-40em";
+            cloudList[9].style.right = "50em";
+            cloudList[9].style.bottom = "-35em";
+            cloudList[10].style.right = "75em";
+            cloudList[10].style.bottom = "-60em";
+            cloudList[11].style.right = "110em";
+            cloudList[11].style.bottom = "-50em";
+          }
+        });
+    
+        const getRandomDirection = () => {
+          const directions = ["2em", "-2em"];
+          return directions[Math.floor(Math.random() * directions.length)];
+        };
+    
+        const moveElementRandomly = (element) => {
+          const randomDirectionX = getRandomDirection();
+          const randomDirectionY = getRandomDirection();
+          element.style.transform = `translate(${randomDirectionX}, ${randomDirectionY})`;
+        };
+    
+        const cloudSons = root.querySelectorAll(".cloud-son");
+        setInterval(() => {
+          cloudSons.forEach(moveElementRandomly);
+        }, 1000);
+    
+        if (initTheme === "dark") {
+          components.onclick();
+        }
+      };
+    
+      class ThemeButton extends HTMLElement {
+        constructor() {
+          super();
+        }
+        connectedCallback() {
+          const initTheme = this.getAttribute("value") || "light";
+          const size = +this.getAttribute("size") || 3;
+          const shadow = this.attachShadow({ mode: "closed" });
+          const container = document.createElement("div");
+          container.setAttribute("class", "container");
+          container.setAttribute("style", `font-size: ${(size / 3).toFixed(2)}px`);
+          container.innerHTML =
+            '<div class="components"><div class="main-button"><div class="moon"></div><div class="moon"></div><div class="moon"></div></div><div class="daytime-background"></div><div class="daytime-background"></div><div class="daytime-background"></div><div class="cloud"><div class="cloud-son"></div><div class="cloud-son"></div><div class="cloud-son"></div><div class="cloud-son"></div><div class="cloud-son"></div><div class="cloud-son"></div></div><div class="cloud-light"><div class="cloud-son"></div><div class="cloud-son"></div><div class="cloud-son"></div><div class="cloud-son"></div><div class="cloud-son"></div><div class="cloud-son"></div></div><div class="stars"><div class="star big"><div class="star-son"></div><div class="star-son"></div><div class="star-son"></div><div class="star-son"></div></div><div class="star big"><div class="star-son"></div><div class="star-son"></div><div class="star-son"></div><div class="star-son"></div></div><div class="star medium"><div class="star-son"></div><div class="star-son"></div><div class="star-son"></div><div class="star-son"></div></div><div class="star medium"><div class="star-son"></div><div class="star-son"></div><div class="star-son"></div><div class="star-son"></div></div><div class="star small"><div class="star-son"></div><div class="star-son"></div><div class="star-son"></div><div class="star-son"></div></div><div class="star small"><div class="star-son"></div><div class="star-son"></div><div class="star-son"></div><div class="star-son"></div></div></div></div>';
+          const style = document.createElement("style");
+          style.textContent =
+            "* { margin: 0; padding: 0; transition: 0.7s; -webkit-tap-highlight-color:rgba(0,0,0,0); } .container { position: absolute;top: 50%;left: 50%;margin-top: -35em;margin-left: -90em;width: 180em; height: 70em; display: inline-block; vertical-align: bottom; transform: translate3d(0, 0, 0); } .components{ position:fixed; width: 180em; height: 70em; background-color: rgba(70, 133, 192,1); border-radius: 100em; box-shadow: inset 0 0 5em 3em rgba(0, 0, 0, 0.5); overflow: hidden; transition: 0.7s; transition-timing-function: cubic-bezier( 0,0.5, 1,1); cursor: pointer; } .main-button{ margin: 7.5em 0 0 7.5em; width: 55em; height:55em; background-color: rgba(255, 195, 35,1); border-radius: 50%; box-shadow:3em 3em 5em rgba(0, 0, 0, 0.5), inset -3em -5em 3em -3em rgba(0, 0, 0, 0.5), inset 4em 5em 2em -2em rgba(255, 230, 80,1); transition: 1.0s; transition-timing-function: cubic-bezier(0.56, 1.35, 0.52, 1.00); } .moon{ position: absolute; background-color: rgba(150, 160, 180, 1); box-shadow:inset 0em 0em 1em 1em rgba(0, 0, 0, 0.3) ; border-radius: 50%; transition: 0.5s; opacity: 0; } .moon:nth-child(1){ top: 7.5em; left: 25em; width: 12.5em; height: 12.5em; } .moon:nth-child(2){ top: 20em; left: 7.5em; width: 20em; height: 20em; } .moon:nth-child(3){ top: 32.5em; left: 32.5em; width: 12.5em; height: 12.5em; } .daytime-background { position: absolute; border-radius: 50%; transition: 1.0s; transition-timing-function: cubic-bezier(0.56, 1.35, 0.52, 1.00); } .daytime-background:nth-child(2){ top: -20em; left: -20em; width: 110em; height:110em; background-color: rgba(255, 255, 255,0.2); z-index: -2; } .daytime-background:nth-child(3){ top: -32.5em; left: -17.5em; width: 135em; height:135em; background-color: rgba(255, 255, 255,0.1); z-index: -3; } .daytime-background:nth-child(4){ top: -45em; left: -15em; width: 160em; height:160em; background-color: rgba(255, 255, 255,0.05); z-index: -4; } .cloud,.cloud-light{ transform: translateY(10em); transition: 1.0s; transition-timing-function: cubic-bezier(0.56, 1.35, 0.52, 1.00); } .cloud-son{ position: absolute; background-color: #fff; border-radius: 50%; z-index: -1; transition: transform 6s,right 1s,bottom 1s; } .cloud-son:nth-child(6n+1){ right: -20em; bottom: 10em; width: 50em; height: 50em; } .cloud-son:nth-child(6n+2) { right: -10em; bottom: -25em; width: 60em; height: 60em; } .cloud-son:nth-child(6n+3) { right: 20em; bottom: -40em; width: 60em; height: 60em; } .cloud-son:nth-child(6n+4) { right: 50em; bottom: -35em; width: 60em; height: 60em; } .cloud-son:nth-child(6n+5) { right: 75em; bottom: -60em; width: 75em; height: 75em; } .cloud-son:nth-child(6n+6) { right: 110em; bottom: -50em; width: 60em; height: 60em; } .cloud{ z-index: -2; } .cloud-light{ position: absolute; right: 0em; bottom: 25em; opacity: 0.5; z-index: -3; /*transform: rotate(-5deg);*/ } .stars{ transform: translateY(-125em); z-index: -2; transition: 1.0s; transition-timing-function: cubic-bezier(0.56, 1.35, 0.52, 1.00); } .big { --size: 7.5em; } .medium { --size: 5em; } .small { --size: 3em; } .star { position: absolute; width: calc(2*var(--size)); height: calc(2*var(--size)); } .star:nth-child(1){ top: 11em; left: 39em; animation-name: star; animation-duration: 3.5s; } .star:nth-child(2){ top: 39em; left: 91em; animation-name: star; animation-duration: 4.1s; } .star:nth-child(3){ top: 26em; left: 19em; animation-name: star; animation-duration: 4.9s; } .star:nth-child(4){ top: 37em; left: 66em; animation-name: star; animation-duration: 5.3s; } .star:nth-child(5){ top: 21em; left: 75em; animation-name: star; animation-duration: 3s; } .star:nth-child(6){ top: 51em; left: 38em; animation-name: star; animation-duration: 2.2s; } @keyframes star { 0%,20%{ transform: scale(0); } 20%,100% { transform: scale(1); } } .star-son{ float: left; } .star-son:nth-child(1) { --pos: left 0; } .star-son:nth-child(2) { --pos: right 0; } .star-son:nth-child(3) { --pos: 0 bottom; } .star-son:nth-child(4) { --pos: right bottom; } .star-son { width: var(--size); height: var(--size); background-image: radial-gradient(circle var(--size) at var(--pos), transparent var(--size), #fff); } .star{ transform: scale(1); transition-timing-function: cubic-bezier(0.56, 1.35, 0.52, 1.00); transition: 1s; animation-iteration-count:infinite; animation-direction: alternate; animation-timing-function: linear; } .twinkle { transform: scale(0); }";
+          const changeTheme = (detail) => {
+            this.dispatchEvent(new CustomEvent("change", { detail }));
+          };
+          func(container, initTheme, changeTheme);
+          shadow.appendChild(style);
+          shadow.appendChild(container);
+        }
+      }
+    
+      customElements.define("theme-button", ThemeButton);
+
+      // Integration logic
+      const themeBtnDesktop = document.getElementById('themeBtnDesktop');
+      const themeBtnMobile = document.getElementById('themeBtnMobile');
+      const body = document.body;
+
+      function applyTheme(theme) {
+          if (theme === 'dark') {
+              body.classList.add('dark-mode');
+              createStars(); // 创建星星
+          } else {
+              body.classList.remove('dark-mode');
+              removeStars(); // 移除星星
+          }
+          localStorage.setItem('theme', theme);
+      }
+
+      function createStars() {
+          if (document.getElementById('stars-container')) return;
+
+          const container = document.createElement('div');
+          container.id = 'stars-container';
+          // 设置容器高度以匹配文档总高度
+          container.style.height = `${document.documentElement.scrollHeight}px`;
+          body.prepend(container);
+
+          const starCount = 100;
+          const shootingStarCount = 5;
+          // 使用一个精确的四角星 SVG
+          const starSVG = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polygon fill="currentColor" points="12,0 14,10 24,12 14,14 12,24 10,14 0,12 10,10 "/></svg>`;
+
+          // 创建普通星星
+          for (let i = 0; i < starCount; i++) {
+              const star = document.createElement('div');
+              star.className = 'star-bg';
+              star.innerHTML = starSVG;
+
+              const size = Math.random() * 15 + 5; // 5px to 20px
+              star.style.width = `${size}px`;
+              star.style.height = `${size}px`;
+
+              star.style.top = `${Math.random() * 100}%`;
+              star.style.left = `${Math.random() * 100}%`;
+
+              const duration = Math.random() * 3 + 2; // 2s to 5s
+              const delay = Math.random() * 5; // 0s to 5s
+              star.style.animationDuration = `${duration}s`;
+              star.style.animationDelay = `${delay}s`;
+
+              container.appendChild(star);
+          }
+
+          // 创建流星
+          for (let i = 0; i < shootingStarCount; i++) {
+              const shootingStar = document.createElement('div');
+              shootingStar.className = 'shooting-star';
+              
+              shootingStar.style.top = `${Math.random() * -50}px`; // 从屏幕外开始
+              shootingStar.style.left = `${Math.random() * 100}%`;
+              
+              const duration = Math.random() * 2 + 1; // 1s to 3s
+              const delay = Math.random() * 10 + 5; // 5s to 15s delay
+              shootingStar.style.animationDuration = `${duration}s`;
+              shootingStar.style.animationDelay = `${delay}s`;
+
+              container.appendChild(shootingStar);
+          }
+          
+          // 监听窗口大小变化，调整星星容器高度
+          window.addEventListener('resize', resizeStarsContainer);
+      }
+
+      function removeStars() {
+          const container = document.getElementById('stars-container');
+          if (container) {
+              container.remove();
+          }
+          window.removeEventListener('resize', resizeStarsContainer);
+      }
+
+      function resizeStarsContainer() {
+          const container = document.getElementById('stars-container');
+          if (container) {
+              container.style.height = `${document.documentElement.scrollHeight}px`;
+          }
+      }
+
+      function syncButtons(theme) {
+          if (theme === 'dark') {
+              if (themeBtnDesktop.getAttribute('value') !== 'dark') {
+                  themeBtnDesktop.shadowRoot.querySelector('.components').click();
+              }
+              if (themeBtnMobile.getAttribute('value') !== 'dark') {
+                  themeBtnMobile.shadowRoot.querySelector('.components').click();
+              }
+          } else {
+              if (themeBtnDesktop.getAttribute('value') === 'dark') {
+                  themeBtnDesktop.shadowRoot.querySelector('.components').click();
+              }
+              if (themeBtnMobile.getAttribute('value') === 'dark') {
+                  themeBtnMobile.shadowRoot.querySelector('.components').click();
+              }
+          }
+      }
+
+      themeBtnDesktop.addEventListener('change', e => {
+          applyTheme(e.detail);
+      });
+
+      themeBtnMobile.addEventListener('change', e => {
+          applyTheme(e.detail);
+      });
+
+      document.addEventListener('DOMContentLoaded', function() {
+          const savedTheme = localStorage.getItem('theme');
+          if (savedTheme) {
+              applyTheme(savedTheme);
+              setTimeout(() => syncButtons(savedTheme), 100);
+          }
+      });
+    })();
+    </script>
+</body>
+</html>
