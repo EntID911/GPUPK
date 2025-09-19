@@ -1032,11 +1032,21 @@
             }
 
             .changelog-header {
-                flex-direction: column;
-                gap: 10px;
-                align-items: flex-start;
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+                width: 100%;
             }
-            
+
+            .changelog-title {
+                flex: 0 1 auto;
+            }
+
+            .changelog-toggle {
+                flex: 0 0 auto;
+            }
+
             .back-to-top {
                 bottom: 20px;
                 right: 20px;
@@ -1045,9 +1055,18 @@
                 font-size: 18px;
             }
 
-            /* 在移动端移除白天模式的背景光效 */
+            header {
+                padding: 55px 20px 25px;
+            }
+
+            #theme-toggle-container-mobile theme-button {
+                transform: scale(0.9);
+                transform-origin: top right;
+            }
+
             body:not(.dark-mode)::before {
-                display: none;
+                filter: blur(140px);
+                opacity: 0.75;
             }
         }
 
@@ -1254,8 +1273,8 @@
         #theme-toggle-container-mobile {
             display: none;
             position: absolute;
-            top: 15px; /* 调整位置 */
-            left: 15px; /* 调整位置 */
+            top: 18px; /* 移动端顶栏对齐 */
+            right: 48px; /* 保持与右侧的间距，同时再向左移 */
             z-index: 10;
         }
 
@@ -1275,6 +1294,9 @@
             <div id="theme-toggle-container-desktop">
                 <theme-button value="light" id="themeBtnDesktop" size="1.8"></theme-button>
             </div>
+            <div id="theme-toggle-container-mobile">
+                <theme-button value="light" id="themeBtnMobile" size="1.4"></theme-button>
+            </div>
             <h1>3DMark 显卡跑分天梯站</h1>
             <div class="header-info">
                 <p class="update-info">更新日期：2025.8.17</p>
@@ -1287,9 +1309,6 @@
 
         <!-- 更新日志区域 -->
         <div class="changelog-section">
-            <div id="theme-toggle-container-mobile">
-                <theme-button value="light" id="themeBtnMobile" size="1.6"></theme-button>
-            </div>
             <div class="changelog-header">
                 <h2 class="changelog-title">更新日志</h2>
                 <button class="changelog-toggle" onclick="toggleChangelog()">展开日志</button>
